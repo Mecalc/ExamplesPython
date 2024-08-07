@@ -87,11 +87,11 @@ for loop_count in range(5):
         data = payload_data[index:index + 24]
         index += 24
 
-        channel_id = struct.unpack('<i', data[0:4])[0]
-        sample_type = struct.unpack('<i', data[4:8])[0]
-        channel_type = struct.unpack('<I', data[8:12])[0]
-        channel_data_size = struct.unpack('<I', data[12:16])[0]
-        timestamp = struct.unpack('<Q', data[16:24])[0]
+        channel_id = struct.unpack('i', data[0:4])[0]
+        sample_type = struct.unpack('i', data[4:8])[0]
+        channel_type = struct.unpack('I', data[8:12])[0]
+        channel_data_size = struct.unpack('I', data[12:16])[0]
+        timestamp = struct.unpack('Q', data[16:24])[0]
 
         # Next read the Specific Channel Header based on the ChannelType.
         if channel_type == 0:
@@ -104,11 +104,11 @@ for loop_count in range(5):
             specific_data = payload_data[index:index + 20]
             index += 20
 
-            analog_channel_integrity = struct.unpack('<i', specific_data[0:4])[0]
-            level_crossing_occurred = struct.unpack('<i', specific_data[4:8])[0]
-            level = struct.unpack('<f', specific_data[8:12])[0]
-            min_value = struct.unpack('<f', specific_data[12:16])[0]
-            max_value = struct.unpack('<f', specific_data[16:20])[0]
+            analog_channel_integrity = struct.unpack('i', specific_data[0:4])[0]
+            level_crossing_occurred = struct.unpack('i', specific_data[4:8])[0]
+            level = struct.unpack('f', specific_data[8:12])[0]
+            min_value = struct.unpack('f', specific_data[12:16])[0]
+            max_value = struct.unpack('f', specific_data[16:20])[0]
 
             # Depending on the SampleType, as specified in the Generic Channel Header, there might be an additional field and the data format might change.
             # Hence we need to read the data based on the SampleType.
@@ -116,24 +116,24 @@ for loop_count in range(5):
                 # The SampleType 0 is for 32-bit floating point data.
                 specific_data = payload_data[index:index + channel_data_size]
                 index += channel_data_size
-                sampled_data = struct.unpack('<f' * (channel_data_size // 4), specific_data)
+                sampled_data = struct.unpack('f' * (channel_data_size // 4), specific_data)
             
             # The following sample types will occur only when you configure the controller to deliver Raw Data.
             elif sample_type == 1:
                 # The SampleType 1 is for 16-bit signed integer data.
                 # You'll have to read one additional field for the scaling factor, then read the data scaling it to a float yourself.
-                scaling_factor = struct.unpack('<f', payload_data[index:index + 4])[0]
+                scaling_factor = struct.unpack('f', payload_data[index:index + 4])[0]
                 index += 4
 
                 specific_data = payload_data[index:index + channel_data_size]
                 index += channel_data_size
 
-                sampled_data = [scaling_factor * struct.unpack('<h', specific_data[i:i + 2])[0] for i in range(0, len(specific_data), 2)]
+                sampled_data = [scaling_factor * struct.unpack('h', specific_data[i:i + 2])[0] for i in range(0, len(specific_data), 2)]
 
             elif sample_type == 2:
                 # The SampleType 2 is for 24-bit signed integer data.
                 # You'll have to read one additional field for the scaling factor, then read the data scaling it to a float yourself.
-                scaling_factor = struct.unpack('<f', payload_data[index:index + 4])[0]
+                scaling_factor = struct.unpack('f', payload_data[index:index + 4])[0]
                 index += 4
 
                 specific_data = payload_data[index:index + channel_data_size]
@@ -149,20 +149,20 @@ for loop_count in range(5):
             elif sample_type == 3:
                 # The SampleType 3 is for 32-bit signed integer data.
                 # You'll have to read one additional field for the scaling factor, then read the data scaling it to a float yourself.
-                scaling_factor = struct.unpack('<f', payload_data[index:index + 4])[0]
+                scaling_factor = struct.unpack('f', payload_data[index:index + 4])[0]
                 index += 4
 
                 specific_data = payload_data[index:index + channel_data_size]
                 index += channel_data_size
 
-                sampled_data = [scaling_factor * struct.unpack('<i', specific_data[i:i + 4])[0] for i in range(0, len(specific_data), 4)]
+                sampled_data = [scaling_factor * struct.unpack('i', specific_data[i:i + 4])[0] for i in range(0, len(specific_data), 4)]
         
         elif channel_type == 1:
             # The Counter Channels (Tacho) does not have a specific header, hence we can directly read the data.
             specific_data = payload_data[index:index + channel_data_size]
             index += channel_data_size
 
-            sampled_data = struct.unpack('<d' * (channel_data_size // 8), specific_data)
+            sampled_data = struct.unpack('d' * (channel_data_size // 8), specific_data)
 
         elif channel_type == 2:
             # The CAN Bus Channel Header reserves 24 bytes for future use.
@@ -180,17 +180,17 @@ for loop_count in range(5):
             message_list = []
             message_end = index + channel_data_size
             while index < message_end:
-                timestamp = struct.unpack('<d', payload_data[index:index + 8])[0]
+                timestamp = struct.unpack('d', payload_data[index:index + 8])[0]
                 index += 8
-                message_id = struct.unpack('<I', payload_data[index:index + 4])[0]
+                message_id = struct.unpack('I', payload_data[index:index + 4])[0]
                 index += 4
-                header = struct.unpack('<B', payload_data[index:index + 1])[0]
+                header = struct.unpack('B', payload_data[index:index + 1])[0]
                 index += 1
-                frame_format = struct.unpack('<B', payload_data[index:index + 1])[0]
+                frame_format = struct.unpack('B', payload_data[index:index + 1])[0]
                 index += 1
-                frame_type = struct.unpack('<B', payload_data[index:index + 1])[0]
+                frame_type = struct.unpack('B', payload_data[index:index + 1])[0]
                 index += 1
-                dlc = struct.unpack('<B', payload_data[index:index + 1])[0]
+                dlc = struct.unpack('B', payload_data[index:index + 1])[0]
                 index += 1
                 data = list(payload_data[index:index + dlc])
                 index += dlc
