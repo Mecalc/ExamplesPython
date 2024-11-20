@@ -38,7 +38,7 @@ client_socket.connect((ip, streaming_port))
 
 # Lets loop for a while and read the data from the client socket.
 analog_channel_data = {}
-for loop_count in range(5):
+for loop_count in range(500):
     print("Loop count:", loop_count + 1)
 
     # The first 32 bytes of the data stream contains the header information.
@@ -209,6 +209,21 @@ for loop_count in range(5):
 
             index += channel_data_size
 
+        elif channel_type == 3:
+            # NOTE: GPS channel is still in Beta, use at own risk.
+            # The GPS Bus Channel Header reserves 12 bytes.
+            specific_data = payload_data[index:index + 12]
+            index += 12
+
+            timestamp = struct.unpack('Q', specific_data[0:8])[0]
+            accuracyInNanoSeconds = struct.unpack('H', specific_data[8:10])[0]
+            isLeapSecondsValid = struct.unpack('B', specific_data[10:11])[0]
+            leapSeconds = struct.unpack('B', specific_data[11:12])[0]
+
+            # Now read the GPS message, it formatted in ASCII and always end with a /r/n, 
+            gpsMessage = payload_data[index:index + channel_data_size].decode('ascii')
+            index += channel_data_size
+            print(gpsMessage)
         else:
             print("Unknown Channel Type: ", channel_type)
             exit()
